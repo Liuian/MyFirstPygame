@@ -1,16 +1,19 @@
 #sprite(精靈)
 import pygame
 import random
+import os
 
 FPS = 60    #constant variable used to be all capital
 WIDTH = 500
 HEIGHT = 600
 
 #初始化 ＆ 創建視窗
-pygame.init()
+pygame.init()   #載入圖片之前要初始化
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("MyFirstPygame") #change display screen's title
 clock = pygame.time.Clock()
+
+#import image 要統一路徑寫法 使用os模組
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -24,7 +27,6 @@ class Player(pygame.sprite.Sprite):
         #self.rect.x = 200                       #最左上為的點 x = 200
         #self.rect.y = 200
         #self.rect.center = (WIDTH / 2, HEIGHT - 10) #點設在圖片中間
-
     def update(self):
         key_pressed = pygame.key.get_pressed()  #回傳按鍵有沒有被按的布林值
         if key_pressed[pygame.K_RIGHT]:         #如果右鍵有被按 K_a a鍵
@@ -34,12 +36,12 @@ class Player(pygame.sprite.Sprite):
 
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
-        elif self. rect.left < 0:
+        elif self.rect.left < 0:
             self.rect.left = 0
-
     def shoot(self):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)                             #add bullet into sprite group
+        bullets.add(bullet)
 
 class Rock(pygame.sprite.Sprite):
     def __init__(self):
@@ -64,22 +66,26 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):                   #sent player's location
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((10, 20))   #the image to display
-        self.image.fill((255, 255, 255))
+        self.image.fill((0, 255, 255))
         self.rect = self.image.get_rect()       #定位 匡起來 #get_rect :在pygame拿一個平台
         self.rect.centerx = x
-        self.rect.buttom = y
+        self.rect.bottom = y
         self.speedy = -10
     def update(self):
         self.rect.y += self.speedy
-        if(self.rect.buttom < 0):
+        if(self.rect.bottom < 0):
             self.kill()
-
+#creat group
 all_sprites = pygame.sprite.Group() #創建一個sprite的群組
-Player = Player()                   #創一個物件
-all_sprites.add(Player)             #把Player加進群組
+rocks = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+
+player = Player()                   #創一個物件
+all_sprites.add(player)             #把Player加進群組
 for i in range(0, 8):
     r = Rock()
     all_sprites.add(r)
+    rocks.add(r)
 
 #遊戲迴圈
 running = True
@@ -96,7 +102,15 @@ while running:
 
     #update game
     all_sprites.update()        #執行每個物件的update函式
+    hits = pygame.sprite.groupcollide(rocks, bullets, True, True)  #True = want to delete element 函式可以回傳字典 回傳hit 是撞到
+    for hit in hits:    #不懂這裡用法問什麼事for
+        r = Rock()
+        all_sprites.add(r)
+        rocks.add(r)
 
+    hits = pygame.sprite.spritecollide(player, rocks, False)    #player是飛船 rocks 是群組
+    if hits:
+        running = False
     #display
     screen.fill((0, 0, 0))      #screen.fill((R, G, B))#fill : fill in color
     all_sprites.draw(screen)    #把all_sprite內的東西全部畫出來
